@@ -150,6 +150,11 @@ Keep it tested
 
 MIT License — free to use, modify, and distribute.
 
+## 📜 License
+This project is licensed under the MIT License.  
+See the [LICENSE](LICENSE) file for details.
+
+
 👨‍💻 Author
 
 Eric (Ricoom software Developer)
