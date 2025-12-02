@@ -62,7 +62,46 @@ If using Maven:
 
 mvn clean install
 mvn javafx:run
+Build the project and copy dependencies
+mvn clean package
 
+
+This will:
+
+Compile the project
+
+Copy all runtime dependencies to target/libs
+
+ Create a custom runtime image with jlink
+jlink ^
+  --module-path "%JAVA_HOME%\jmods;C:\javafx-jmods-21.0.7;target/libs" ^
+  --add-modules java.base,java.desktop,java.logging,java.sql,java.xml.crypto,jdk.unsupported,javafx.controls,javafx.fxml,javafx.graphics,javafx.base ^
+  --output runtime ^
+  --strip-debug ^
+  --compress=2 ^
+  --no-header-files ^
+  --no-man-pages
+
+
+This creates a minimal runtime containing only the necessary modules for your application.
+
+Package the app as a Windows .exe using jpackage
+jpackage ^
+  --type exe ^
+  --name barcode-pdf-generator ^
+  --input target ^
+  --main-jar barcode-pdf-generator-0.0.1-SNAPSHOT.jar ^
+  --main-class com.ricoom.barcode.BarcodePdfGridGenerator ^
+  --runtime-image runtime ^
+  --dest dist ^
+  --icon app-icon.ico ^
+  --win-menu ^
+  --win-shortcut ^
+  --vendor "Eric Mwaniki Munene" ^
+  --description "BarcodePdfGridGenerator Application." ^
+  --app-version "1.0.0" ^
+  --copyright "© 2025 Eric Mwaniki Munene" ^
+  --license-file license.txt
 
 Or run the main class manually:
 
