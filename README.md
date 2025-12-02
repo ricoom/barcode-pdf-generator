@@ -41,9 +41,7 @@ No server needed
 
 Everything runs locally
 
-📸 Screenshots
 
-(Add screenshots in your repo, e.g. UI and PDF sample)
 
 🚀 Getting Started
 Prerequisites
@@ -126,7 +124,6 @@ Steps to reproduce
 
 Expected vs actual behavior
 
-Screenshots or logs (if available)
 
 📦 Pull Requests
 
