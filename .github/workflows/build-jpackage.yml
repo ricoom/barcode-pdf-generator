@@ -46,3 +46,19 @@ jobs:
           name: BarcodePDFGenerator-Installer
           path: dist/barcode-pdf-generator-1.0.0.exe
           retention-days: 7 
+
+                # ... (after the jpackage command runs)
+
+      - name: Create GitHub Release and Upload Asset
+        # Use a well-known action for releases
+        uses: softprops/action-gh-release@v2 
+        if: startsWith(github.ref, 'refs/tags/') # Only run this step if the build was triggered by a tag push
+        with:
+          files: dist/barcode-pdf-generator-1.0.0.exe
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+        env:
+          # This action requires GITHUB_TOKEN to interact with the API
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+
