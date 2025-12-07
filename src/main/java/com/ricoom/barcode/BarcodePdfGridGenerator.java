@@ -5,7 +5,6 @@ import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.oned.Code128Writer;
-import com.itextpdf.io.image.ImageData;
 import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.geom.PageSize;
 import com.itextpdf.kernel.pdf.PdfDocument;
@@ -38,6 +37,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 
 public class BarcodePdfGridGenerator extends Application {
@@ -91,8 +91,16 @@ public class BarcodePdfGridGenerator extends Application {
                 }
             }
         });
+        
+        Button exportCsvBtn = new Button("Export CSV");
+        exportCsvBtn.setOnAction(e -> exportToCSV(stage));
 
-        HBox buttons = new HBox(10, addBtn, generateBtn);
+        Button exportExcelBtn = new Button("Export Excel");
+        exportExcelBtn.setOnAction(e -> exportToExcel(stage));
+
+        HBox buttons = new HBox(10, addBtn, generateBtn, exportCsvBtn, exportExcelBtn);
+
+
         buttons.setAlignment(Pos.CENTER);
 
         root.getChildren().addAll(tableView, buttons);
@@ -101,6 +109,83 @@ public class BarcodePdfGridGenerator extends Application {
         stage.setScene(scene);
         stage.show();
     }
+    private void exportToCSV(Stage stage) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save CSV File");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+        fileChooser.setInitialFileName("products.csv");
+
+        File file = fileChooser.showSaveDialog(stage);
+        if (file == null) return;
+
+        try (PrintWriter writer = new PrintWriter(file)) {
+            writer.println("Name,Barcode,Quantity"); // header
+
+            for (Product p : productList) {
+                writer.println(
+                    p.getName() + "," +
+                    p.getBarcode() + "," +
+                    p.getQuantity()
+                );
+            }
+
+            showAlert("Export Successful", "CSV saved to:\n" + file.getAbsolutePath());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("Export Error", "Could not write CSV:\n" + e.getMessage());
+        }
+    }
+
+    
+    private void exportToExcel(Stage stage) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save Excel File");
+        fileChooser.getExtensionFilters().add(
+            new FileChooser.ExtensionFilter("Excel Files", "*.xlsx")
+        );
+        fileChooser.setInitialFileName("products.xlsx");
+
+        File file = fileChooser.showSaveDialog(stage);
+        if (file == null) return;
+
+        try (org.apache.poi.ss.usermodel.Workbook workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook()) {
+
+            org.apache.poi.ss.usermodel.Sheet sheet = workbook.createSheet("Products");
+
+            // Header
+            org.apache.poi.ss.usermodel.Row header = sheet.createRow(0);
+            header.createCell(0).setCellValue("Name");
+            header.createCell(1).setCellValue("Barcode");
+            header.createCell(2).setCellValue("Quantity");
+
+            // Rows
+            int rowIndex = 1;
+            for (Product p : productList) {
+                org.apache.poi.ss.usermodel.Row row = sheet.createRow(rowIndex++);
+                row.createCell(0).setCellValue(p.getName());
+                row.createCell(1).setCellValue(p.getBarcode());
+                row.createCell(2).setCellValue(p.getQuantity());
+            }
+
+            // Autosize
+            for (int i = 0; i < 3; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            // Write file
+            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(file)) {
+                workbook.write(fos);
+            }
+
+            showAlert("Export Successful", "Excel saved to:\n" + file.getAbsolutePath());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("Export Error", "Failed to write Excel:\n" + e.getMessage());
+        }
+    }
+
 
     private void addProductDialog(Stage owner) {
         Dialog<Product> dialog = new Dialog<>();
