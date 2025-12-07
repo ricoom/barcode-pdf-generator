@@ -1,0 +1,64 @@
+name: Build and Package EXE Installer
+
+on:
+  push:
+    branches:
+      - main # Or your main branch name
+
+jobs:
+  jpackage-windows-exe:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (required to run the jpackage tool)
+        # We specify Java 17 here.
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17' 
+
+      - name: Run jpackage command to create the EXE
+        run: |
+          # The command remains the same as it references your pre-built assets
+          jpackage ^
+            --type exe ^
+            --name barcode-pdf-generator ^
+            --input target ^
+            --main-jar barcode-pdf-generator-0.0.1-SNAPSHOT.jar ^
+            --main-class com.ricoom.barcode.BarcodePdfGridGenerator ^
+            --runtime-image runtime ^
+            --dest dist ^
+            --icon app-icon.ico ^
+            --win-menu ^
+            --win-shortcut ^
+            --vendor "Eric Mwaniki Munene" ^
+            --description "BarcodePdfGridGenerator Application." ^
+            --app-version "1.0.0" ^
+            --copyright "© 2025 Eric Mwaniki Munene" ^
+            --license-file license.txt
+
+      - name: Upload the resulting EXE installer as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BarcodePDFGenerator-Installer
+          path: dist/barcode-pdf-generator-1.0.0.exe
+          retention-days: 7 
+
+                # ... (after the jpackage command runs)
+
+      - name: Create GitHub Release and Upload Asset
+        # Use a well-known action for releases
+        uses: softprops/action-gh-release@v2 
+        if: startsWith(github.ref, 'refs/tags/') # Only run this step if the build was triggered by a tag push
+        with:
+          files: dist/barcode-pdf-generator-1.0.0.exe
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+        env:
+          # This action requires GITHUB_TOKEN to interact with the API
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+
