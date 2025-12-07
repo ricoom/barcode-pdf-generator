@@ -46,7 +46,7 @@ public class BarcodePdfGridGenerator extends Application {
 
     @Override
     public void start(Stage stage) {
-        stage.setTitle("Batch Barcode Generator");
+        stage.setTitle("Batch new Barcode Generator");
 
         VBox root = new VBox(10);
         root.setPadding(new Insets(10));

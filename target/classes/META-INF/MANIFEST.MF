@@ -1,0 +1,19 @@
+Manifest-Version: 1.0
+Build-Jdk-Spec: 21
+Class-Path: libs/javafx-controls-21.0.7-win.jar libs/javafx-graphics-21.
+ 0.7.jar libs/javafx-graphics-21.0.7-win.jar libs/javafx-base-21.0.7.jar
+  libs/javafx-base-21.0.7-win.jar libs/javafx-fxml-21.0.7-win.jar libs/j
+ avafx-controls-21.0.7.jar libs/poi-ooxml-5.2.3.jar libs/poi-5.2.3.jar l
+ ibs/commons-codec-1.15.jar libs/commons-math3-3.6.1.jar libs/SparseBitS
+ et-1.2.jar libs/poi-ooxml-lite-5.2.3.jar libs/xmlbeans-5.1.1.jar libs/c
+ ommons-compress-1.21.jar libs/commons-io-2.11.0.jar libs/curvesapi-1.07
+ .jar libs/log4j-api-2.18.0.jar libs/commons-collections4-4.4.jar libs/s
+ lf4j-simple-2.0.9.jar libs/slf4j-api-2.0.9.jar libs/jackson-databind-2.
+ 16.2.jar libs/jackson-annotations-2.16.2.jar libs/jackson-core-2.16.2.j
+ ar libs/core-3.5.2.jar libs/javase-3.5.2.jar libs/jcommander-1.82.jar l
+ ibs/jai-imageio-core-1.4.0.jar libs/kernel-7.2.6.jar libs/bcpkix-jdk18o
+ n-1.75.jar libs/bcutil-jdk18on-1.75.jar libs/bcprov-jdk18on-1.75.jar li
+ bs/layout-7.2.6.jar libs/io-7.2.6.jar libs/commons-7.2.6.jar
+Main-Class: com.ricoom.barcode.BarcodePdfGridGenerator
+Created-By: Maven Integration for Eclipse
+
