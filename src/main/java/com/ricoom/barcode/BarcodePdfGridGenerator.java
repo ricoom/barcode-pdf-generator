@@ -38,6 +38,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.DecimalFormat;
 import java.util.List;
 
 public class BarcodePdfGridGenerator extends Application {
@@ -61,11 +62,28 @@ public class BarcodePdfGridGenerator extends Application {
         barcodeCol.setCellValueFactory(data -> data.getValue().barcodeProperty());
         barcodeCol.setPrefWidth(150);
 
+        // Add price column
+        TableColumn<Product, Double> priceCol = new TableColumn<>("Price");
+        priceCol.setCellValueFactory(data -> data.getValue().priceProperty().asObject());
+        priceCol.setPrefWidth(80);
+        // Format price display with 2 decimal places
+        priceCol.setCellFactory(column -> new TableCell<Product, Double>() {
+            @Override
+            protected void updateItem(Double price, boolean empty) {
+                super.updateItem(price, empty);
+                if (empty || price == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("Kes%.2f", price));
+                }
+            }
+        });
+
         TableColumn<Product, Integer> quantityCol = new TableColumn<>("Qty");
         quantityCol.setCellValueFactory(data -> data.getValue().quantityProperty().asObject());
         quantityCol.setPrefWidth(60);
 
-        tableView.getColumns().addAll(nameCol, barcodeCol, quantityCol);
+        tableView.getColumns().addAll(nameCol, barcodeCol, priceCol, quantityCol);
 
         // Buttons
         Button addBtn = new Button("+ Add Product");
@@ -99,16 +117,15 @@ public class BarcodePdfGridGenerator extends Application {
         exportExcelBtn.setOnAction(e -> exportToExcel(stage));
 
         HBox buttons = new HBox(10, addBtn, generateBtn, exportCsvBtn, exportExcelBtn);
-
-
         buttons.setAlignment(Pos.CENTER);
 
         root.getChildren().addAll(tableView, buttons);
 
-        Scene scene = new Scene(root, 450, 400);
+        Scene scene = new Scene(root, 550, 400); // Increased width for price column
         stage.setScene(scene);
         stage.show();
     }
+    
     private void exportToCSV(Stage stage) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Save CSV File");
@@ -119,12 +136,13 @@ public class BarcodePdfGridGenerator extends Application {
         if (file == null) return;
 
         try (PrintWriter writer = new PrintWriter(file)) {
-            writer.println("Name,Barcode,Quantity"); // header
+            writer.println("Name,Barcode,Price,Quantity"); // Added Price header
 
             for (Product p : productList) {
                 writer.println(
                     p.getName() + "," +
                     p.getBarcode() + "," +
+                    String.format("%.2f", p.getPrice()) + "," + // Format price with 2 decimals
                     p.getQuantity()
                 );
             }
@@ -153,11 +171,12 @@ public class BarcodePdfGridGenerator extends Application {
 
             org.apache.poi.ss.usermodel.Sheet sheet = workbook.createSheet("Products");
 
-            // Header
+            // Header - Added Price
             org.apache.poi.ss.usermodel.Row header = sheet.createRow(0);
             header.createCell(0).setCellValue("Name");
             header.createCell(1).setCellValue("Barcode");
-            header.createCell(2).setCellValue("Quantity");
+            header.createCell(2).setCellValue("Price");
+            header.createCell(3).setCellValue("Quantity");
 
             // Rows
             int rowIndex = 1;
@@ -165,11 +184,12 @@ public class BarcodePdfGridGenerator extends Application {
                 org.apache.poi.ss.usermodel.Row row = sheet.createRow(rowIndex++);
                 row.createCell(0).setCellValue(p.getName());
                 row.createCell(1).setCellValue(p.getBarcode());
-                row.createCell(2).setCellValue(p.getQuantity());
+                row.createCell(2).setCellValue(p.getPrice()); // Add price
+                row.createCell(3).setCellValue(p.getQuantity());
             }
 
             // Autosize
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 4; i++) { // Changed to 4 columns
                 sheet.autoSizeColumn(i);
             }
 
@@ -185,7 +205,6 @@ public class BarcodePdfGridGenerator extends Application {
             showAlert("Export Error", "Failed to write Excel:\n" + e.getMessage());
         }
     }
-
 
     private void addProductDialog(Stage owner) {
         Dialog<Product> dialog = new Dialog<>();
@@ -205,20 +224,47 @@ public class BarcodePdfGridGenerator extends Application {
 
         HBox barcodeBox = new HBox(5, barcodeField, genBarcodeBtn);
 
+        // Add price field
+        TextField priceField = new TextField();
+        priceField.setPromptText("0.00");
+        
+        // Add validation for price
+        priceField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.matches("\\d*(\\.\\d{0,2})?")) {
+                priceField.setText(oldValue);
+            }
+        });
+
         Spinner<Integer> quantitySpinner = new Spinner<>(1, 1000, 1);
 
-        vbox.getChildren().addAll(new Label("Name:"), nameField,
+        vbox.getChildren().addAll(
+                new Label("Name:"), nameField,
                 new Label("Barcode:"), barcodeBox,
-                new Label("Quantity:"), quantitySpinner);
+                new Label("Price (Kes):"), priceField,
+                new Label("Quantity:"), quantitySpinner
+        );
 
         dialog.getDialogPane().setContent(vbox);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        // Enable OK button only when required fields are filled
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.setDisable(true);
+
+        // Validate inputs
+        nameField.textProperty().addListener((obs, oldVal, newVal) -> validateInputs(nameField, priceField, okButton));
+        priceField.textProperty().addListener((obs, oldVal, newVal) -> validateInputs(nameField, priceField, okButton));
 
         dialog.setResultConverter(btn -> {
             if (btn == ButtonType.OK) {
                 Product p = new Product();
                 p.setName(nameField.getText());
                 p.setBarcode(barcodeField.getText());
+                try {
+                    p.setPrice(Double.parseDouble(priceField.getText()));
+                } catch (NumberFormatException e) {
+                    p.setPrice(0.0); // Default to 0 if invalid
+                }
                 p.setQuantity(quantitySpinner.getValue());
                 return p;
             }
@@ -226,6 +272,12 @@ public class BarcodePdfGridGenerator extends Application {
         });
 
         dialog.showAndWait().ifPresent(productList::add);
+    }
+
+    private void validateInputs(TextField nameField, TextField priceField, Button okButton) {
+        boolean isValid = !nameField.getText().trim().isEmpty() && 
+                         !priceField.getText().trim().isEmpty();
+        okButton.setDisable(!isValid);
     }
 
     private String generateRandomBarcode() {
@@ -284,14 +336,31 @@ public class BarcodePdfGridGenerator extends Application {
         pdfImage.setAutoScale(true).setHorizontalAlignment(HorizontalAlignment.CENTER);
 
         String displayName = product.getName();
-        if (displayName != null && displayName.length() > 30) displayName = displayName.substring(0, 27) + "...";
+        if (displayName != null && displayName.length() > 30) {
+            displayName = displayName.substring(0, 27) + "...";
+        }
 
-        Paragraph p = new Paragraph(displayName)
+        // Format price with 2 decimal places
+        String formattedPrice = String.format("Kes%.2f", product.getPrice());
+        
+        // Create paragraphs for name and price
+        Paragraph nameParagraph = new Paragraph(displayName)
                 .setFontSize(7f)
                 .setTextAlignment(TextAlignment.CENTER)
                 .setMultipliedLeading(1.0f);
+        
+        Paragraph priceParagraph = new Paragraph(formattedPrice)
+                .setFontSize(10f)
+                .setBold()
+                .setTextAlignment(TextAlignment.CENTER)
+                .setMultipliedLeading(1.2f);
 
-        return new Cell().add(pdfImage).add(p).setPadding(8).setHorizontalAlignment(HorizontalAlignment.CENTER);
+        return new Cell()
+                .add(pdfImage)
+                .add(nameParagraph)
+                .add(priceParagraph)
+                .setPadding(8)
+                .setHorizontalAlignment(HorizontalAlignment.CENTER);
     }
 
     private static BufferedImage generateBarcode(String text, int width, int height) throws WriterException {

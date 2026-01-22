@@ -1,2 +1,3 @@
 com\ricoom\barcode\model\Product.class
 com\ricoom\barcode\BarcodePdfGridGenerator.class
+com\ricoom\barcode\BarcodePdfGridGenerator$1.class
